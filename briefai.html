@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BriefAI — Ton assistant de direction personnel</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #06080f;
+  --s1: #0c1020;
+  --s2: #111827;
+  --gold: #f5c842;
+  --gold2: #e8a020;
+  --blue: #4f8ef7;
+  --green: #34d98b;
+  --red: #f05454;
+  --text: #e8ecf4;
+  --muted: #5a6478;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Geist', sans-serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* STARS BACKGROUND */
+.stars {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: 
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(79,142,247,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(245,200,66,0.06) 0%, transparent 50%);
+}
+.stars::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: 
+    radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 35% 8%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 55% 35%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(1px 1px at 75% 15%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 90% 45%, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px at 25% 65%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 65% 75%, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(1.5px 1.5px at 82% 28%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 10% 85%, rgba(255,255,255,0.3), transparent);
+}
+
+.wrap { position: relative; z-index: 1; }
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 0 48px; height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  background: rgba(6,8,15,0.85);
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px; letter-spacing: 2px;
+  color: var(--gold);
+}
+.logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.logo span { color: var(--text); }
+.nav-right { display: flex; align-items: center; gap: 20px; }
+.nav-link { font-size: 13px; font-weight: 400; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+.nav-link:hover { color: var(--text); }
+.nav-btn {
+  background: var(--gold);
+  color: #000; border: none; cursor: pointer;
+  font-family: 'Geist', sans-serif;
+  font-size: 13px; font-weight: 600;
+  padding: 8px 20px; border-radius: 8px;
+  transition: all 0.2s;
+}
+.nav-btn:hover { background: #ffd85c; transform: translateY(-1px); }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 100px 48px 80px;
+}
+
+.hero-time {
+  font-family: 'Geist Mono', monospace;
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 32px;
+  display: flex; align-items: center; gap: 8px;
+  animation: fade-up 0.5s ease both;
+}
+.time-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s ease infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.5)} }
+
+h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(80px, 10vw, 140px);
+  letter-spacing: 4px; line-height: 0.9;
+  margin-bottom: 8px;
+  animation: fade-up 0.5s 0.05s ease both;
+}
+.h1-gold { color: var(--gold); }
+.h1-sub {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: clamp(22px, 3vw, 36px);
+  color: var(--muted); font-weight: 400;
+  letter-spacing: 1px;
+  margin-bottom: 40px;
+  animation: fade-up 0.5s 0.1s ease both;
+}
+
+.hero-desc {
+  font-size: 17px; color: var(--muted); line-height: 1.7;
+  max-width: 560px; margin: 0 auto 52px;
+  font-weight: 300;
+  animation: fade-up 0.5s 0.15s ease both;
+}
+.hero-desc strong { color: var(--text); font-weight: 500; }
+
+.hero-cta {
+  display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+  animation: fade-up 0.5s 0.2s ease both;
+}
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: #000; border: none; cursor: pointer;
+  font-family: 'Geist', sans-serif; font-weight: 700; font-size: 15px;
+  padding: 15px 36px; border-radius: 10px;
+  transition: all 0.25s;
+  box-shadow: 0 8px 32px rgba(245,200,66,0.25);
+}
+.btn-gold:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(245,200,66,0.4); }
+.btn-outline {
+  background: transparent; color: var(--text);
+  border: 1px solid var(--border2); cursor: pointer;
+  font-family: 'Geist', sans-serif; font-weight: 500; font-size: 15px;
+  padding: 15px 32px; border-radius: 10px;
+  transition: all 0.2s;
+}
+.btn-outline:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+
+@keyframes fade-up {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* BRIEF PREVIEW */
+.brief-preview {
+  width: 100%; max-width: 680px; margin: 60px auto 0;
+  animation: fade-up 0.6s 0.3s ease both;
+}
+.brief-card {
+  background: var(--s1);
+  border: 1px solid var(--border2);
+  border-radius: 20px; overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,200,66,0.05);
+}
+.brief-top {
+  padding: 16px 24px;
+  background: linear-gradient(90deg, rgba(245,200,66,0.08), transparent);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.brief-top-left { display: flex; align-items: center; gap: 10px; }
+.brief-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #000;
+}
+.brief-greeting { font-size: 13px; font-weight: 500; }
+.brief-greeting span { color: var(--gold); }
+.brief-date { font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted); }
+.brief-score {
+  background: rgba(52,217,139,0.12); border: 1px solid rgba(52,217,139,0.2);
+  color: var(--green); font-size: 11px; font-weight: 600;
+  padding: 4px 12px; border-radius: 20px;
+  display: flex; align-items: center; gap: 5px;
+}
+
+.brief-body { padding: 20px 24px; }
+.brief-section { margin-bottom: 18px; }
+.brief-section:last-child { margin-bottom: 0; }
+.bs-header {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--muted); margin-bottom: 10px;
+}
+.bs-dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot-gold { background: var(--gold); }
+.dot-blue { background: var(--blue); }
+.dot-red { background: var(--red); }
+.dot-green { background: var(--green); }
+
+.brief-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border-radius: 8px;
+  font-size: 13px; line-height: 1.5; margin-bottom: 4px;
+  transition: background 0.2s;
+}
+.brief-item:hover { background: rgba(255,255,255,0.03); }
+.bi-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.bi-text { flex: 1; }
+.bi-tag {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px; color: var(--muted);
+  background: rgba(255,255,255,0.04);
+  padding: 2px 7px; border-radius: 4px; white-space: nowrap;
+}
+.urgent { color: var(--red); }
+.important { color: var(--gold); }
+.info { color: var(--blue); }
+
+.brief-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  background: rgba(52,217,139,0.03);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.bf-insight {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--green);
+  font-style: italic;
+}
+.bf-time { font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted); }
+
+/* STATS BAND */
+.stats-band {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.stat-cell {
+  padding: 36px 32px;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+.stat-cell:last-child { border-right: none; }
+.stat-n {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px; letter-spacing: 2px;
+  color: var(--gold); line-height: 1; margin-bottom: 8px;
+}
+.stat-l { font-size: 13px; color: var(--muted); font-weight: 400; line-height: 1.4; }
+
+/* DEMO SECTION */
+.demo-section { padding: 100px 48px; max-width: 1100px; margin: 0 auto; }
+.demo-header { text-align: center; margin-bottom: 60px; }
+.tag-line {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 20px;
+  padding: 5px 14px; border: 1px solid rgba(245,200,66,0.2);
+  border-radius: 4px; background: rgba(245,200,66,0.05);
+}
+.demo-h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(44px, 5vw, 70px);
+  letter-spacing: 3px; line-height: 1;
+  margin-bottom: 16px;
+}
+.demo-sub { font-size: 15px; color: var(--muted); max-width: 440px; margin: 0 auto; font-weight: 300; line-height: 1.7; }
+
+/* INTERACTIVE BRIEF GENERATOR */
+.generator {
+  background: var(--s1);
+  border: 1px solid var(--border2);
+  border-radius: 24px; overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+}
+
+.gen-header {
+  padding: 20px 28px;
+  background: var(--s2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.gen-title { font-size: 14px; font-weight: 600; }
+.gen-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.powered {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--muted);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  padding: 4px 10px; border-radius: 6px;
+}
+.p-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.5s ease infinite; }
+
+.gen-body { display: grid; grid-template-columns: 1fr 1.2fr; min-height: 500px; }
+
+.gen-inputs { padding: 28px; border-right: 1px solid var(--border); }
+.input-group { margin-bottom: 20px; }
+.input-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; display: block;
+}
+.gen-input, .gen-textarea, .gen-select {
+  width: 100%; background: var(--s2);
+  border: 1px solid var(--border2); border-radius: 10px;
+  padding: 11px 14px; color: var(--text);
+  font-family: 'Geist', sans-serif; font-size: 13px;
+  outline: none; transition: border-color 0.2s;
+}
+.gen-input:focus, .gen-textarea:focus { border-color: rgba(245,200,66,0.4); }
+.gen-textarea { resize: none; min-height: 80px; line-height: 1.5; }
+.gen-input::placeholder, .gen-textarea::placeholder { color: var(--muted); }
+
+.gen-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: #000; border: none; cursor: pointer;
+  font-family: 'Geist', sans-serif; font-weight: 700; font-size: 14px;
+  padding: 14px; border-radius: 10px;
+  transition: all 0.2s; letter-spacing: 0.3px;
+  margin-top: 4px;
+}
+.gen-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.gen-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.gen-output {
+  padding: 28px;
+  display: flex; flex-direction: column;
+}
+.output-placeholder {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px;
+  color: var(--muted); text-align: center;
+}
+.ph-icon { font-size: 48px; opacity: 0.3; }
+.ph-text { font-size: 13px; font-weight: 300; line-height: 1.6; max-width: 220px; }
+
+/* LOADING */
+.loading-state {
+  flex: 1; display: none; flex-direction: column;
+  align-items: center; justify-content: center; gap: 20px;
+}
+.loading-ring {
+  width: 48px; height: 48px;
+  border: 2px solid rgba(245,200,66,0.15);
+  border-top-color: var(--gold);
+  border-radius: 50%; animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-steps { display: flex; flex-direction: column; gap: 8px; }
+.loading-step {
+  font-size: 12px; color: var(--muted);
+  display: flex; align-items: center; gap: 8px;
+  transition: color 0.3s;
+}
+.loading-step.done { color: var(--green); }
+.loading-step.active { color: var(--gold); }
+.ls-icon { font-size: 14px; }
+
+/* RESULT */
+.result-state {
+  flex: 1; display: none; overflow-y: auto;
+  animation: fade-in 0.5s ease;
+}
+@keyframes fade-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+.result-brief-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.rbh-name { font-size: 15px; font-weight: 600; }
+.rbh-name span { color: var(--gold); }
+.rbh-score {
+  background: rgba(52,217,139,0.1); border: 1px solid rgba(52,217,139,0.2);
+  color: var(--green); font-size: 12px; font-weight: 600;
+  padding: 4px 12px; border-radius: 20px;
+}
+
+.result-section { margin-bottom: 20px; }
+.rs-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.rs-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 9px 12px; border-radius: 8px;
+  font-size: 13px; line-height: 1.5; margin-bottom: 4px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.rs-item:hover { border-color: var(--border); background: rgba(255,255,255,0.04); }
+.rs-item.priority-high { border-left: 2px solid var(--red); }
+.rs-item.priority-med { border-left: 2px solid var(--gold); }
+.rs-item.priority-low { border-left: 2px solid var(--blue); }
+.rs-emoji { flex-shrink: 0; font-size: 14px; }
+.rs-text { flex: 1; }
+.rs-badge {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px; padding: 2px 7px; border-radius: 4px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.badge-urgent { background: rgba(240,84,84,0.12); color: var(--red); border: 1px solid rgba(240,84,84,0.2); }
+.badge-today { background: rgba(245,200,66,0.12); color: var(--gold); border: 1px solid rgba(245,200,66,0.2); }
+.badge-info { background: rgba(79,142,247,0.12); color: var(--blue); border: 1px solid rgba(79,142,247,0.2); }
+.badge-ok { background: rgba(52,217,139,0.12); color: var(--green); border: 1px solid rgba(52,217,139,0.2); }
+
+.result-insight {
+  background: linear-gradient(135deg, rgba(245,200,66,0.06), rgba(79,142,247,0.06));
+  border: 1px solid rgba(245,200,66,0.15);
+  border-radius: 10px; padding: 14px 16px;
+  font-size: 13px; font-style: italic; color: var(--text);
+  line-height: 1.6; margin-top: 16px;
+}
+.insight-label {
+  font-style: normal; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--gold); margin-bottom: 6px; display: block;
+}
+
+/* FEATURES */
+.features-section { padding: 100px 48px; max-width: 1100px; margin: 0 auto; }
+.feat-header { text-align: center; margin-bottom: 64px; }
+.features-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.feat {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px;
+  display: flex; gap: 20px; align-items: flex-start;
+  transition: all 0.3s;
+}
+.feat:hover { border-color: var(--border2); background: var(--s2); transform: translateY(-3px); }
+.feat-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: rgba(245,200,66,0.08); border: 1px solid rgba(245,200,66,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.feat-body {}
+.feat-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.3px; }
+.feat-desc { font-size: 13px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+/* PRICING */
+.pricing-section { padding: 100px 48px; max-width: 900px; margin: 0 auto; }
+.pricing-header { text-align: center; margin-bottom: 60px; }
+.price-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.pc {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 20px; padding: 32px 28px; text-align: center;
+  transition: all 0.3s; position: relative;
+}
+.pc.featured {
+  border-color: rgba(245,200,66,0.4);
+  background: linear-gradient(135deg, rgba(245,200,66,0.06), var(--s1));
+  box-shadow: 0 0 60px rgba(245,200,66,0.08);
+}
+.pc-badge {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: #000; font-size: 11px; font-weight: 700;
+  padding: 4px 16px; border-radius: 20px; white-space: nowrap;
+}
+.pc-plan { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 16px; }
+.pc-price {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 56px; letter-spacing: 2px; color: var(--gold); line-height: 1;
+}
+.pc-price small { font-family: 'Geist', sans-serif; font-size: 16px; color: var(--muted); font-weight: 300; }
+.pc-sub { font-size: 12px; color: var(--muted); margin: 8px 0 24px; }
+.pc-features { list-style: none; text-align: left; margin-bottom: 28px; }
+.pc-features li {
+  font-size: 13px; color: var(--muted); padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.pc-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+.pc-btn {
+  width: 100%; background: var(--s2);
+  border: 1px solid var(--border2); color: var(--text);
+  cursor: pointer; font-family: 'Geist', sans-serif;
+  font-weight: 600; font-size: 14px; padding: 13px;
+  border-radius: 10px; transition: all 0.2s;
+}
+.pc-btn:hover { background: rgba(255,255,255,0.06); }
+.pc-btn.featured { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #000; border: none; }
+.pc-btn.featured:hover { filter: brightness(1.1); }
+
+/* CTA FINAL */
+.cta-final {
+  padding: 140px 48px; text-align: center;
+  background: linear-gradient(180deg, transparent, rgba(245,200,66,0.04), transparent);
+  border-top: 1px solid var(--border);
+}
+.cta-h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(60px, 8vw, 110px);
+  letter-spacing: 4px; line-height: 0.9;
+  margin-bottom: 24px;
+}
+.cta-h2 em { font-family: 'Instrument Serif', serif; font-style: italic; color: var(--gold); letter-spacing: 2px; }
+.cta-sub { font-size: 16px; color: var(--muted); max-width: 440px; margin: 0 auto 48px; font-weight: 300; line-height: 1.7; }
+
+/* FOOTER */
+footer {
+  padding: 32px 48px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.foot-logo { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--gold); }
+.foot-r { font-size: 12px; color: var(--muted); }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  nav { padding: 0 20px; }
+  .hero { padding: 90px 20px 60px; }
+  .stats-band { grid-template-columns: repeat(2, 1fr); }
+  .gen-body { grid-template-columns: 1fr; }
+  .gen-inputs { border-right: none; border-bottom: 1px solid var(--border); }
+  .features-list { grid-template-columns: 1fr; }
+  .price-cards { grid-template-columns: 1fr; }
+  .demo-section, .features-section, .pricing-section { padding: 80px 20px; }
+}
+
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="wrap">
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    BRIEF<span>AI</span>
+  </div>
+  <div class="nav-right">
+    <a href="#" class="nav-link">Fonctionnalités</a>
+    <a href="#" class="nav-link">Tarifs</a>
+    <a href="#" class="nav-link">Blog</a>
+    <button class="nav-btn">Essai gratuit</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-time">
+    <span class="time-dot"></span>
+    <span id="live-time">Chargement...</span>
+    &nbsp;· Votre journée commence maintenant
+  </div>
+  <h1 class="h1-gold">BRIEF</h1>
+  <h1>DU MATIN.</h1>
+  <p class="h1-sub">Ton assistant de direction personnel, propulsé par l'IA</p>
+  <p class="hero-desc">
+    Chaque matin, en <strong>30 secondes</strong>, BriefAI analyse tous tes outils et te dit exactement <strong>ce que tu dois faire aujourd'hui, dans quel ordre, et pourquoi</strong> — comme si tu avais un assistant de direction.
+  </p>
+  <div class="hero-cta">
+    <button class="btn-gold" onclick="scrollToDemo()">⚡ Générer mon brief IA</button>
+    <button class="btn-outline">Voir comment ça marche →</button>
+  </div>
+
+  <!-- PREVIEW CARD -->
+  <div class="brief-preview">
+    <div class="brief-card">
+      <div class="brief-top">
+        <div class="brief-top-left">
+          <div class="brief-avatar">A</div>
+          <div>
+            <div class="brief-greeting">Bonjour <span>Alexandre</span> 👋</div>
+            <div class="brief-date" id="brief-date">Vendredi 20 mars 2026 · 07h30</div>
+          </div>
+        </div>
+        <div class="brief-score">🎯 Journée chargée — 7 priorités</div>
+      </div>
+      <div class="brief-body">
+        <div class="brief-section">
+          <div class="bs-header"><span class="bs-dot dot-red"></span>URGENT — À traiter avant 10h</div>
+          <div class="brief-item">
+            <span class="bi-icon">🔴</span>
+            <span class="bi-text">Réponse client Nexum SA en attente depuis 48h — risque de résiliation</span>
+            <span class="bi-tag urgent">Gmail</span>
+          </div>
+          <div class="brief-item">
+            <span class="bi-icon">🔴</span>
+            <span class="bi-text">Contrat signé à envoyer à Thomas avant la réunion 10h30</span>
+            <span class="bi-tag urgent">Notion</span>
+          </div>
+        </div>
+        <div class="brief-section">
+          <div class="bs-header"><span class="bs-dot dot-gold"></span>IMPORTANT — Aujourd'hui</div>
+          <div class="brief-item">
+            <span class="bi-icon">📅</span>
+            <span class="bi-text">3 réunions · 5h30 de meetings · BriefAI te suggère d'en annuler 1</span>
+            <span class="bi-tag important">Calendar</span>
+          </div>
+          <div class="brief-item">
+            <span class="bi-icon">📊</span>
+            <span class="bi-text">Rapport Q1 à finaliser — Sophie attend ta validation</span>
+            <span class="bi-tag important">Notion</span>
+          </div>
+        </div>
+        <div class="brief-section">
+          <div class="bs-header"><span class="bs-dot dot-blue"></span>À SAVOIR</div>
+          <div class="brief-item">
+            <span class="bi-icon">💬</span>
+            <span class="bi-text">12 messages Slack non lus · 2 mentions directes qui nécessitent une réponse</span>
+            <span class="bi-tag info">Slack</span>
+          </div>
+        </div>
+      </div>
+      <div class="brief-footer">
+        <div class="bf-insight">✦ Focus recommandé : email Nexum d'abord — impact business critique</div>
+        <div class="bf-time">Généré en 0.8s</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-band">
+  <div class="stat-cell">
+    <div class="stat-n">2H30</div>
+    <div class="stat-l">récupérées par jour par utilisateur</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-n">30S</div>
+    <div class="stat-l">pour générer un brief complet</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-n">12+</div>
+    <div class="stat-l">outils connectés (Gmail, Notion, Slack...)</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-n">0</div>
+    <div class="stat-l">configuration requise pour démarrer</div>
+  </div>
+</div>
+
+<!-- DEMO INTERACTIVE -->
+<section class="demo-section" id="demo">
+  <div class="demo-header">
+    <div class="tag-line">⚡ Démo IA en direct</div>
+    <h2 class="demo-h2">GÉNÈRE TON<br><span style="color:var(--gold)">BRIEF</span> MAINTENANT</h2>
+    <p class="demo-sub">Décris ta situation professionnelle. L'IA génère ton brief personnalisé en temps réel.</p>
+  </div>
+
+  <div class="generator">
+    <div class="gen-header">
+      <div>
+        <div class="gen-title">Générateur de Brief IA</div>
+        <div class="gen-subtitle">Décris ta situation · L'IA fait le reste</div>
+      </div>
+      <div class="powered"><span class="p-dot"></span> Propulsé par Claude AI</div>
+    </div>
+
+    <div class="gen-body">
+      <!-- INPUTS -->
+      <div class="gen-inputs">
+        <div class="input-group">
+          <label class="input-label">Ton prénom</label>
+          <input class="gen-input" id="inp-name" placeholder="Ex: Sophie" />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Ton métier / secteur</label>
+          <input class="gen-input" id="inp-job" placeholder="Ex: Directrice commerciale, PME tech" />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Tes sujets en cours ou urgences</label>
+          <textarea class="gen-textarea" id="inp-context" placeholder="Ex: j'ai un client mécontent depuis 3 jours, un rapport à rendre vendredi, une réunion DG lundi, et mon équipe attend une réponse sur le budget..."></textarea>
+        </div>
+        <button class="gen-btn" id="gen-btn" onclick="generateBrief()">⚡ Générer mon brief du matin →</button>
+        <div style="font-size:11px; color:var(--muted); text-align:center; margin-top:10px">Ctrl+Enter pour générer</div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="gen-output">
+        <div class="output-placeholder" id="placeholder">
+          <span class="ph-icon">☀️</span>
+          <p class="ph-text">Remplis le formulaire et génère ton brief personnalisé en temps réel</p>
+        </div>
+        <div class="loading-state" id="loading">
+          <div class="loading-ring"></div>
+          <div class="loading-steps">
+            <div class="loading-step active" id="ls1"><span class="ls-icon">📥</span> Analyse de ta situation...</div>
+            <div class="loading-step" id="ls2"><span class="ls-icon">🧠</span> Identification des priorités...</div>
+            <div class="loading-step" id="ls3"><span class="ls-icon">⚡</span> Génération du brief...</div>
+            <div class="loading-step" id="ls4"><span class="ls-icon">✅</span> Finalisation...</div>
+          </div>
+        </div>
+        <div class="result-state" id="result"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section">
+  <div class="feat-header">
+    <div class="tag-line">Fonctionnalités</div>
+    <h2 class="demo-h2">TOUT CE QU'IL<br>TE <span style="color:var(--gold)">FAUT.</span></h2>
+  </div>
+  <div class="features-list">
+    <div class="feat">
+      <div class="feat-icon">🔗</div>
+      <div class="feat-body">
+        <h3 class="feat-title">Connexion universelle</h3>
+        <p class="feat-desc">Gmail, Outlook, Google Calendar, Notion, Slack, Teams, Jira, HubSpot, Salesforce. BriefAI lit tout, tu touches rien.</p>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🧠</div>
+      <div class="feat-body">
+        <h3 class="feat-title">Priorisation intelligente</h3>
+        <p class="feat-desc">L'IA ne liste pas juste tes tâches — elle comprend l'impact business de chacune et te dit laquelle faire en premier.</p>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">⏰</div>
+      <div class="feat-body">
+        <h3 class="feat-title">Brief automatique 7h30</h3>
+        <p class="feat-desc">Chaque matin à l'heure que tu choisis, ton brief arrive. Tu commences ta journée avec clarté totale dès le réveil.</p>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📱</div>
+      <div class="feat-body">
+        <h3 class="feat-title">App mobile + WhatsApp</h3>
+        <p class="feat-desc">Reçois ton brief par notification, email, ou directement en message WhatsApp. Accessible partout, même hors connexion.</p>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🎯</div>
+      <div class="feat-body">
+        <h3 class="feat-title">Apprentissage personnel</h3>
+        <p class="feat-desc">Plus tu l'utilises, plus BriefAI comprend ta façon de travailler et adapte ses recommandations à ta réalité.</p>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🔒</div>
+      <div class="feat-body">
+        <h3 class="feat-title">100% privé & RGPD</h3>
+        <p class="feat-desc">Tes données ne sont jamais utilisées pour entraîner des modèles. Hébergement Europe, chiffrement total, suppression instantanée.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section">
+  <div class="pricing-header">
+    <div class="tag-line">Tarifs</div>
+    <h2 class="demo-h2">ROI DÈS LE<br><span style="color:var(--gold)">1ER JOUR.</span></h2>
+  </div>
+  <div class="price-cards">
+    <div class="pc">
+      <div class="pc-plan">Solo</div>
+      <div class="pc-price">9<small>€/mois</small></div>
+      <div class="pc-sub">1 utilisateur</div>
+      <ul class="pc-features">
+        <li>Brief quotidien IA</li>
+        <li>3 outils connectés</li>
+        <li>App mobile</li>
+        <li>Historique 30 jours</li>
+      </ul>
+      <button class="pc-btn">Commencer</button>
+    </div>
+    <div class="pc featured">
+      <div class="pc-badge">⭐ PLUS POPULAIRE</div>
+      <div class="pc-plan">Pro</div>
+      <div class="pc-price">29<small>€/mois</small></div>
+      <div class="pc-sub">1 utilisateur · tout inclus</div>
+      <ul class="pc-features">
+        <li>Brief + alertes temps réel</li>
+        <li>Outils illimités</li>
+        <li>WhatsApp + Email</li>
+        <li>IA personnalisée</li>
+        <li>Analyses hebdo</li>
+      </ul>
+      <button class="pc-btn featured">Essai gratuit 14j</button>
+    </div>
+    <div class="pc">
+      <div class="pc-plan">Équipe</div>
+      <div class="pc-price">19<small>€/user</small></div>
+      <div class="pc-sub">À partir de 5 users</div>
+      <ul class="pc-features">
+        <li>Tout Pro inclus</li>
+        <li>Dashboard manager</li>
+        <li>Briefs d'équipe partagés</li>
+        <li>SSO & admin</li>
+        <li>Support dédié</li>
+      </ul>
+      <button class="pc-btn">Contacter</button>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final">
+  <h2 class="cta-h2">COMMENCE<br>TA JOURNÉE<br><em>en avance.</em></h2>
+  <p class="cta-sub">Rejoins les professionnels qui ne commencent plus leur journée sans BriefAI. Essai gratuit 14 jours, aucune carte requise.</p>
+  <button class="btn-gold" style="font-size:16px; padding:18px 48px; border-radius:12px">⚡ Démarrer gratuitement</button>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-logo">⚡ BRIEFAI</div>
+  <div class="foot-r">© 2026 · La clarté dès 7h30.</div>
+</footer>
+
+</div>
+
+<script>
+// LIVE TIME
+function updateTime() {
+  const now = new Date();
+  const options = { weekday:'long', day:'numeric', month:'long', year:'numeric' };
+  const dateStr = now.toLocaleDateString('fr-FR', options);
+  const timeStr = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  document.getElementById('live-time').textContent = dateStr + ' · ' + timeStr;
+  const briefDate = document.getElementById('brief-date');
+  if (briefDate) briefDate.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1) + ' · ' + timeStr;
+}
+updateTime();
+setInterval(updateTime, 30000);
+
+// SCROLL TO DEMO
+function scrollToDemo() {
+  document.getElementById('demo').scrollIntoView({ behavior: 'smooth' });
+  setTimeout(() => document.getElementById('inp-name').focus(), 800);
+}
+
+// AI BRIEF GENERATION
+async function generateBrief() {
+  const name = document.getElementById('inp-name').value.trim() || 'vous';
+  const job = document.getElementById('inp-job').value.trim();
+  const context = document.getElementById('inp-context').value.trim();
+
+  if (!context && !job) {
+    document.getElementById('inp-context').placeholder = '⚠ Décris au moins ta situation ou tes urgences du jour...';
+    document.getElementById('inp-context').focus();
+    return;
+  }
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.textContent = 'Génération en cours...';
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('loading').style.display = 'flex';
+
+  // Animate loading steps
+  const steps = ['ls1','ls2','ls3','ls4'];
+  steps.forEach(s => document.getElementById(s).className = 'loading-step');
+  document.getElementById('ls1').className = 'loading-step active';
+  let si = 0;
+  const stepInterval = setInterval(() => {
+    if (si < steps.length - 1) {
+      document.getElementById(steps[si]).className = 'loading-step done';
+      si++;
+      document.getElementById(steps[si]).className = 'loading-step active';
+    }
+  }, 600);
+
+  try {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+    const timeStr = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: `Tu es BriefAI, l'assistant de direction personnel le plus puissant du monde. Tu génères des briefs du matin ultra-précis et actionnables. Réponds UNIQUEMENT en JSON valide (aucun markdown, aucun backtick), avec exactement cette structure:
+{
+  "score": "texte court ex: Journée intense — 5 priorités",
+  "urgent": [{"emoji":"🔴","text":"description action urgente","badge":"URGENT"}],
+  "important": [{"emoji":"📅","text":"description action importante","badge":"AUJOURD'HUI"}],
+  "info": [{"emoji":"💡","text":"information utile à savoir","badge":"INFO"}],
+  "insight": "conseil stratégique personnalisé et actionnable pour cette journée spécifique"
+}
+Maximum 3 items par catégorie. Sois direct, précis, pratique. Parle à la 2ème personne. Génère des actions concrètes basées sur le contexte fourni.`,
+        messages: [{
+          role: "user",
+          content: `Génère mon brief du matin. Aujourd'hui: ${dateStr} à ${timeStr}.\nPrénom: ${name}\nMétier: ${job || 'professionnel'}\nSituation / urgences du jour: ${context || 'journée normale'}`
+        }]
+      })
+    });
+
+    clearInterval(stepInterval);
+    steps.forEach(s => document.getElementById(s).className = 'loading-step done');
+
+    const data = await response.json();
+    const raw = data.content.map(i => i.text||'').join('');
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+
+    // Render result
+    const result = document.getElementById('result');
+    const colorMap = { 'URGENT':'badge-urgent', 'AUJOURD\'HUI':'badge-today', 'INFO':'badge-info', 'OK':'badge-ok' };
+
+    const renderItems = (items, priority) => items.map(item =>
+      `<div class="rs-item priority-${priority}">
+        <span class="rs-emoji">${item.emoji}</span>
+        <span class="rs-text">${item.text}</span>
+        <span class="rs-badge ${colorMap[item.badge]||'badge-info'}">${item.badge}</span>
+      </div>`
+    ).join('');
+
+    result.innerHTML = `
+      <div class="result-brief-header">
+        <div class="rbh-name">Brief de <span>${name}</span> · ${dateStr}</div>
+        <div class="rbh-score">🎯 ${parsed.score}</div>
+      </div>
+      ${parsed.urgent?.length ? `<div class="result-section"><div class="rs-title" style="color:var(--red)">🔴 URGENT — À traiter en premier</div>${renderItems(parsed.urgent,'high')}</div>` : ''}
+      ${parsed.important?.length ? `<div class="result-section"><div class="rs-title" style="color:var(--gold)">⚡ IMPORTANT — Aujourd'hui</div>${renderItems(parsed.important,'med')}</div>` : ''}
+      ${parsed.info?.length ? `<div class="result-section"><div class="rs-title" style="color:var(--blue)">💡 À SAVOIR</div>${renderItems(parsed.info,'low')}</div>` : ''}
+      <div class="result-insight"><span class="insight-label">✦ Conseil IA du jour</span>${parsed.insight}</div>
+    `;
+
+    document.getElementById('loading').style.display = 'none';
+    result.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '⚡ Générer un nouveau brief →';
+
+  } catch(err) {
+    clearInterval(stepInterval);
+    document.getElementById('loading').style.display = 'none';
+    const result = document.getElementById('result');
+    result.innerHTML = `<div style="padding:20px;color:var(--red);font-size:13px;text-align:center">Erreur de génération. Réessayez dans un instant.</div>`;
+    result.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '⚡ Réessayer →';
+  }
+}
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generateBrief();
+});
+</script>
+</body>
+</html>
